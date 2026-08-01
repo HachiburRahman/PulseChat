@@ -12,42 +12,76 @@ import path from 'node:path'
  * the server", which reads like the backend is down rather than a typo in a
  * dashboard field. Better to break the build, where the message is read.
  */
+/**
+ * Describe what is wrong with one URL variable without ever echoing its value.
+ *
+ * Hosts scrub environment-variable values from build logs, so quoting the value
+ * back prints as `[REDACTED]` and teaches nothing. The URL's *path* (`/`, `/api`)
+ * and its length are short, non-secret facts that survive redaction and pin down
+ * which of the three silent failures this is: not set, wrong path, or pasted
+ * with the quotes still attached.
+ */
+function checkUrlVar(name, rawValue, { wantApiSuffix }) {
+  const shape = wantApiSuffix ? 'https://<your-api-host>/api' : 'https://<your-api-host>'
+  const value = rawValue?.trim()
+
+  if (!value) return `${name} is not set for this build.\n    Set it to ${shape}`
+
+  // A value pasted with its quotes stores the quotes as part of the string.
+  // The dashboard shows what looks like a correct URL, and nothing works.
+  if (/^["'].*["']$/.test(value)) {
+    return (
+      `${name} has quote characters wrapping its value.\n` +
+      `    The host stores them as part of the string. Remove the surrounding\n` +
+      `    " or ' so the value is bare: ${shape}`
+    )
+  }
+
+  let url
+  try {
+    url = new URL(value)
+  } catch {
+    return (
+      `${name} is not a valid URL (${value.length} characters, no scheme?).\n` +
+      `    It must look like ${shape}`
+    )
+  }
+
+  const endsWithApi = /\/api\/?$/.test(url.pathname)
+
+  if (wantApiSuffix && !endsWithApi) {
+    return (
+      `${name} points at path "${url.pathname}" but every route is mounted under /api.\n` +
+      `    Append /api so the path reads "/api" — ${shape}`
+    )
+  }
+  if (!wantApiSuffix && endsWithApi) {
+    return (
+      `${name} points at path "${url.pathname}", but Socket.io connects to the origin.\n` +
+      `    Remove the /api suffix — ${shape}`
+    )
+  }
+  return null
+}
+
 function assertDeployEnv(env) {
-  const problems = []
-  const api = env.VITE_API_URL?.trim()
-  const socket = env.VITE_SOCKET_URL?.trim()
-
-  /**
-   * Never echo the value back. Hosts scrub environment-variable values out of
-   * build logs, so a message like `VITE_API_URL is "https://..."` prints as
-   * `VITE_API_URL is "[REDACTED]"` and the reader learns nothing. Describe the
-   * required shape instead — that survives redaction and is what they need.
-   */
-  if (!api) {
-    problems.push(
-      'VITE_API_URL is not set.\n' +
-        '    Set it to your API origin plus /api — https://<your-api-host>/api',
-    )
-  } else if (!/\/api\/?$/.test(api)) {
-    problems.push(
-      'VITE_API_URL does not end with /api, and every route is mounted there.\n' +
-        '    Append /api to the value you already have — https://<your-api-host>/api',
-    )
-  }
-
-  if (!socket) {
-    problems.push(
-      'VITE_SOCKET_URL is not set.\n' +
-        '    Set it to your API origin, with no path — https://<your-api-host>',
-    )
-  } else if (/\/api\/?$/.test(socket)) {
-    problems.push(
-      'VITE_SOCKET_URL ends with /api, but Socket.io connects to the origin.\n' +
-        '    Remove the /api suffix — https://<your-api-host>',
-    )
-  }
+  const problems = [
+    checkUrlVar('VITE_API_URL', env.VITE_API_URL, { wantApiSuffix: true }),
+    checkUrlVar('VITE_SOCKET_URL', env.VITE_SOCKET_URL, { wantApiSuffix: false }),
+  ].filter(Boolean)
 
   if (!problems.length) return
+
+  /**
+   * Name the environment this build ran in. Vercel scopes variables to
+   * Production / Preview / Development separately, so a variable set for only
+   * one of them looks correct in the dashboard while the other keeps failing —
+   * and nothing on screen says which build you are looking at.
+   */
+  const context = process.env.VERCEL_ENV || process.env.NODE_ENV || 'local'
+  const seen = Object.keys(process.env)
+    .filter((k) => k.startsWith('VITE_'))
+    .sort()
 
   // Print and exit rather than throw: Vite wraps a thrown config error in a
   // stack trace, and in a Vercel build log the useful lines scroll past while
@@ -55,8 +89,12 @@ function assertDeployEnv(env) {
   console.error(
     `\n✖ Cannot build: the deployment environment is incomplete.\n\n` +
       problems.map((p) => `  • ${p}`).join('\n') +
-      `\n\n  Set these in your host's environment variables (Vercel: Settings →\n` +
-      `  Environment Variables), tick every environment, then redeploy.\n` +
+      `\n\n  This build ran in the "${context}" environment and received these\n` +
+      `  VITE_ variables: ${seen.length ? seen.join(', ') : '(none)'}\n\n` +
+      `  On Vercel a variable is scoped per environment. If the name you expect\n` +
+      `  is missing above, it exists but is not ticked for "${context}":\n` +
+      `  Settings → Environment Variables → edit → tick every environment.\n` +
+      `  Values are baked in at build time, so redeploy after changing one.\n\n` +
       `  Building the demo build instead? Set VITE_DEMO_MODE=true.\n`,
   )
   process.exit(1)

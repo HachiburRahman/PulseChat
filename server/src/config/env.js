@@ -103,5 +103,35 @@ export function assertEnv() {
       )
       process.exit(1)
     }
+
+    /**
+     * An origin is a scheme plus a host — browsers send `https://example.com`,
+     * never a bare `example.com`. CORS compares the two as exact strings, so a
+     * scheme-less entry can never match anything and silently blocks the very
+     * frontend it was added for. It looks entirely correct in a dashboard and
+     * in the startup banner, which is what makes it worth failing on.
+     */
+    const malformed = env.clientOrigins.filter((origin) => {
+      try {
+        const { protocol, origin: parsed } = new URL(origin)
+        return !/^https?:$/.test(protocol) || parsed !== origin
+      } catch {
+        return true
+      }
+    })
+
+    if (malformed.length) {
+      console.error(
+        `\n✖ CLIENT_URL contains ${malformed.length} entr${malformed.length === 1 ? 'y that is' : 'ies that are'} not a valid origin:\n\n` +
+          malformed.map((o) => `    ${o}`).join('\n') +
+          `\n\n  An origin needs the scheme and no path or trailing slash, because\n` +
+          `  CORS matches it against the browser's Origin header exactly:\n\n` +
+          `    https://your-app.vercel.app        ✓\n` +
+          `    your-app.vercel.app                ✗ no scheme\n` +
+          `    https://your-app.vercel.app/       ✗ trailing slash\n\n` +
+          `  Comma-separate multiple origins, no spaces needed.\n`,
+      )
+      process.exit(1)
+    }
   }
 }
