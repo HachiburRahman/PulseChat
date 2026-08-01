@@ -9,6 +9,9 @@
 .env.*
 !.env.example
 
+docs
+deploy.md
+
 # ── dependencies & build output ──────────────────────────────────────
 node_modules/
 dist/
