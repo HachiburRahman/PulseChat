@@ -110,7 +110,7 @@ build at the repo root, finds no `package.json`, and fails.
 | `NODE_ENV` | `production` |
 | `MONGO_URI` | your full Atlas string, database name included |
 | `JWT_SECRET` | **a new one**, not your development secret |
-| `CLIENT_URL` | `https://placeholder.vercel.app` — you will correct this in Part 3 |
+| `CLIENT_URL` | your Vercel origin — see Part 3. **Required in production:** the server refuses to boot if this is unset or localhost, because it would block every browser request at the CORS preflight |
 | `AI_PROVIDER` | `gemini` |
 | `GEMINI_API_KEY` | your key |
 | `GEMINI_MODEL` | `gemini-flash-latest` |
@@ -176,10 +176,14 @@ time, so adding them later means redeploying.
 | --- | --- |
 | `VITE_API_URL` | `https://pulsechat-api.onrender.com/api` |
 | `VITE_SOCKET_URL` | `https://pulsechat-api.onrender.com` |
-| `VITE_DEMO_MODE` | `false` |
+| `VITE_DEMO_MODE` | `false` (or omit — demo mode is opt-in) |
 
 Note the difference: `VITE_API_URL` ends in `/api`, `VITE_SOCKET_URL` does not.
 Use `https://` for the socket URL too — Socket.io upgrades to `wss://` itself.
+
+Get either wrong and **the build fails with the exact correction**, rather than
+deploying a bundle that points at localhost. `vite.config.js` checks both before
+Vite emits anything.
 
 Firebase image uploads are optional. Without those keys the upload UI falls back
 to a local preview and nothing breaks. To enable them, add `VITE_FIREBASE_API_KEY`,

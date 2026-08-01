@@ -82,4 +82,26 @@ export function assertEnv() {
     console.error('\n✖ JWT_SECRET is too short for production. Use at least 32 characters.\n')
     process.exit(1)
   }
+
+  /**
+   * A production API whose only allowed origin is localhost accepts nothing a
+   * real browser sends. It still boots, still answers curl, still reports
+   * healthy — and every request from the deployed frontend dies at the CORS
+   * preflight, which surfaces in the UI as "cannot reach the server". Refusing
+   * to start is the only way that failure gets read by a human.
+   */
+  if (env.isProd) {
+    const localOnly = env.clientOrigins.every((origin) => LOOPBACK.test(origin))
+    if (localOnly) {
+      console.error(
+        `\n✖ CLIENT_URL is ${process.env.CLIENT_URL ? `"${process.env.CLIENT_URL}"` : 'not set'}, ` +
+          `so the only allowed origin is localhost.\n\n` +
+          `  In production every browser request would be blocked by CORS.\n` +
+          `  Set CLIENT_URL to your deployed frontend origin, no trailing slash:\n\n` +
+          `    CLIENT_URL=https://your-app.vercel.app\n\n` +
+          `  Comma-separate to allow preview deployments as well.\n`,
+      )
+      process.exit(1)
+    }
+  }
 }

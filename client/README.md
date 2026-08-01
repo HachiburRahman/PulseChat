@@ -36,7 +36,9 @@ Open <http://localhost:5173>. It runs immediately — no backend required, see b
 ## Demo mode
 
 `VITE_DEMO_MODE=true` swaps two modules for in-memory fakes that speak the
-**exact same contract** as the real thing:
+**exact same contract** as the real thing. It is strictly opt-in: unset, or any
+value other than `true`, means the app talks to the real API. That way a deploy
+that forgets the variable fails visibly rather than quietly serving fixtures.
 
 - `src/mock/mockApi.js` stands in for the REST client
 - `src/mock/mockSocket.js` stands in for the socket.io client

@@ -6,12 +6,17 @@ export const API_URL = env.VITE_API_URL || 'http://localhost:5000/api'
 export const SOCKET_URL = env.VITE_SOCKET_URL || 'http://localhost:5000'
 
 /**
- * Demo mode swaps the REST client and the socket for in-memory fakes that
- * speak the exact same contract, so the whole UI is explorable before the
- * Express/Socket.io server from the blueprint exists. Flip
- * `VITE_DEMO_MODE=false` in `.env` the moment the backend is up.
+ * Demo mode swaps the REST client and the socket for in-memory fakes that speak
+ * the exact same contract, so the UI is explorable with no backend running.
+ * Opt in with `VITE_DEMO_MODE=true`.
+ *
+ * Opt-in, never opt-out. This used to read `!== 'false'`, which meant a missing
+ * variable turned demo mode ON — and a hosting platform starts with no
+ * variables at all. A deploy that forgot to set it looked completely healthy
+ * while serving fixtures and never once contacting the real API. Failing to a
+ * visible connection error beats silently faking the whole product.
  */
-export const DEMO_MODE = env.VITE_DEMO_MODE !== 'false'
+export const DEMO_MODE = env.VITE_DEMO_MODE === 'true'
 
 export const STORAGE = {
   token: 'pulsechat.token',

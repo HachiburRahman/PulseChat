@@ -24,13 +24,17 @@ http.interceptors.response.use(
       if (!window.location.pathname.startsWith('/login')) window.location.assign('/login')
     }
 
+    // No `response` at all means the request never got a reply: the API is
+    // down, the URL is wrong, DNS failed, or CORS blocked it. Checking for a
+    // missing response covers all of those; `code === 'ERR_NETWORK'` alone
+    // misses DNS failures, which is exactly how a bad VITE_API_URL presents.
     return Promise.reject(
       Object.assign(error, {
         friendly:
           error.response?.data?.message ||
-          (error.code === 'ERR_NETWORK'
-            ? 'Cannot reach the server. Is the API running?'
-            : 'Something went wrong. Please try again.'),
+          (error.response
+            ? 'Something went wrong. Please try again.'
+            : 'Cannot reach the server. Check that the API is running and that VITE_API_URL points at it.'),
       }),
     )
   },

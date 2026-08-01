@@ -110,6 +110,10 @@ wrapper — keep that tolerance when adding endpoints.
 
 ## Demo mode
 
+**Demo mode is opt-in — never restore the opt-out default.** `DEMO_MODE` reads
+`=== 'true'`, not `!== 'false'`. It used to be the latter, which meant a hosting
+platform with no variables set silently served fixtures while looking healthy.
+
 `VITE_DEMO_MODE=true` in `client/.env` swaps the REST client and the socket for
 in-memory fakes in `client/src/mock/` that speak the identical contract. It is
 `false` by default now that the backend exists. **No component imports the mocks
