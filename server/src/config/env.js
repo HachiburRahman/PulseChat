@@ -41,6 +41,27 @@ export const env = {
 
 const LOOPBACK = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/
 
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Turns one CLIENT_URL entry into a matcher.
+ *
+ * A `*` is allowed inside the host and matches one label segment — no dots, no
+ * slashes. Vercel mints a fresh origin for every single deployment
+ * (`pulse-chat-h8trtsu38-….vercel.app`), so pinning to exact strings means
+ * re-editing CLIENT_URL after every push and getting a CORS wall whenever you
+ * forget. `https://pulse-chat-*.vercel.app` covers them all without opening the
+ * API to every app on vercel.app.
+ */
+function toOriginMatcher(entry) {
+  if (!entry.includes('*')) return (origin) => origin === entry
+  const pattern = `^${entry.split('*').map(escapeRegExp).join('[^./]*')}$`
+  const re = new RegExp(pattern)
+  return (origin) => re.test(origin)
+}
+
+const originMatchers = env.clientOrigins.map(toOriginMatcher)
+
 /**
  * Shared by the Express CORS middleware and the Socket.io CORS option, which
  * are configured separately and must agree.
@@ -48,8 +69,8 @@ const LOOPBACK = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/
  * Vite takes the next free port when 5173 is busy, so a dev client legitimately
  * shows up on 5174, 5175, and so on. Pinning to a single port turns that
  * ordinary event into "blocked by CORS policy", which reads like the server is
- * down. In development any loopback origin is accepted; production stays pinned
- * to CLIENT_URL exactly.
+ * down. In development any loopback origin is accepted; production matches
+ * CLIENT_URL only.
  *
  * Auth rides in an Authorization header rather than a cookie, so a permissive
  * dev origin does not hand another local page a usable session.
@@ -57,7 +78,7 @@ const LOOPBACK = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/
 export function isAllowedOrigin(origin) {
   // No Origin header at all: curl, same-origin navigation, server-to-server.
   if (!origin) return true
-  if (env.clientOrigins.includes(origin)) return true
+  if (originMatchers.some((matches) => matches(origin))) return true
   return !env.isProd && LOOPBACK.test(origin)
 }
 
@@ -112,6 +133,8 @@ export function assertEnv() {
      * in the startup banner, which is what makes it worth failing on.
      */
     const malformed = env.clientOrigins.filter((origin) => {
+      // A wildcard entry is not a parseable URL, so check its shape directly.
+      if (origin.includes('*')) return !/^https?:\/\/[A-Za-z0-9*.-]+(:\d+)?$/.test(origin)
       try {
         const { protocol, origin: parsed } = new URL(origin)
         return !/^https?:$/.test(protocol) || parsed !== origin
@@ -127,6 +150,7 @@ export function assertEnv() {
           `\n\n  An origin needs the scheme and no path or trailing slash, because\n` +
           `  CORS matches it against the browser's Origin header exactly:\n\n` +
           `    https://your-app.vercel.app        ✓\n` +
+          `    https://your-app-*.vercel.app      ✓ covers every preview deploy\n` +
           `    your-app.vercel.app                ✗ no scheme\n` +
           `    https://your-app.vercel.app/       ✗ trailing slash\n\n` +
           `  Comma-separate multiple origins, no spaces needed.\n`,

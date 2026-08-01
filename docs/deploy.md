@@ -216,15 +216,22 @@ Vercel URL:
 CLIENT_URL=https://pulsechat.vercel.app
 ```
 
-**No trailing slash.** The check is an exact string match in production, and
-`https://pulsechat.vercel.app/` will not match `https://pulsechat.vercel.app`.
+**Include the scheme, and no trailing slash.** Browsers send
+`Origin: https://your-app.vercel.app`, and CORS compares that string exactly.
+A bare `your-app.vercel.app` matches nothing and blocks every request while
+looking correct in the dashboard. The server refuses to boot on a malformed
+entry rather than let that happen quietly.
 
-Want Vercel preview deployments to work too? `CLIENT_URL` accepts a
-comma-separated list:
+**Vercel mints a new origin for every deployment**, so pinning exact strings
+means editing this after every push. Use a `*` wildcard, which matches one label
+(no dots), plus your stable alias:
 
 ```
-CLIENT_URL=https://pulsechat.vercel.app,https://pulsechat-git-main-you.vercel.app
+CLIENT_URL=https://pulse-chat-ten-snowy.vercel.app,https://pulse-chat-*.vercel.app
 ```
+
+That covers `pulse-chat-h8trtsu38-….vercel.app` and every future deploy, without
+opening the API to every other app on `vercel.app`.
 
 Render redeploys automatically when you save. Wait for it, then open your Vercel
 URL and sign in with `demo@pulsechat.app` / `pulsechat123`.
