@@ -17,21 +17,33 @@ function assertDeployEnv(env) {
   const api = env.VITE_API_URL?.trim()
   const socket = env.VITE_SOCKET_URL?.trim()
 
+  /**
+   * Never echo the value back. Hosts scrub environment-variable values out of
+   * build logs, so a message like `VITE_API_URL is "https://..."` prints as
+   * `VITE_API_URL is "[REDACTED]"` and the reader learns nothing. Describe the
+   * required shape instead — that survives redaction and is what they need.
+   */
   if (!api) {
-    problems.push('VITE_API_URL is not set. Example: https://your-api.onrender.com/api')
+    problems.push(
+      'VITE_API_URL is not set.\n' +
+        '    Set it to your API origin plus /api — https://<your-api-host>/api',
+    )
   } else if (!/\/api\/?$/.test(api)) {
     problems.push(
-      `VITE_API_URL is "${api}" but must end with /api — every route is mounted there.\n` +
-        `    Change it to: ${api.replace(/\/$/, '')}/api`,
+      'VITE_API_URL does not end with /api, and every route is mounted there.\n' +
+        '    Append /api to the value you already have — https://<your-api-host>/api',
     )
   }
 
   if (!socket) {
-    problems.push('VITE_SOCKET_URL is not set. Example: https://your-api.onrender.com')
+    problems.push(
+      'VITE_SOCKET_URL is not set.\n' +
+        '    Set it to your API origin, with no path — https://<your-api-host>',
+    )
   } else if (/\/api\/?$/.test(socket)) {
     problems.push(
-      `VITE_SOCKET_URL is "${socket}" but must NOT end with /api — Socket.io connects to the origin.\n` +
-        `    Change it to: ${socket.replace(/\/api\/?$/, '')}`,
+      'VITE_SOCKET_URL ends with /api, but Socket.io connects to the origin.\n' +
+        '    Remove the /api suffix — https://<your-api-host>',
     )
   }
 
