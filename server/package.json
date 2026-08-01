@@ -1,0 +1,35 @@
+{
+  "name": "pulsechat-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "start:dev": "nodemon server.js",
+    "start:local": "node src/scripts/devLocal.js",
+    "seed": "node src/scripts/seed.js",
+    "smoke": "node src/scripts/smoke.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.1",
+    "morgan": "^1.11.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.2.0",
+    "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.3"
+  }
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#07090a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f2f0ea" media="(prefers-color-scheme: light)" />
+    <meta
+      name="description"
+      content="PulseChat — real-time rooms, direct messages, presence and a streaming AI assistant."
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/pulse.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=DM+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>PulseChat — live rooms, DMs & an AI that streams</title>
+
+    <script>
+      // Applied before first paint so the theme never flashes.
+      try {
+        const stored = localStorage.getItem('pulsechat.theme')
+        const theme =
+          stored ||
+          (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+        document.documentElement.classList.toggle('dark', theme === 'dark')
+        document.documentElement.dataset.theme = theme
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

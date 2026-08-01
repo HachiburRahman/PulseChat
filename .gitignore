@@ -1,0 +1,35 @@
+# Root ignore rules.
+#
+# client/.gitignore and server/.gitignore already cover their own folders — git
+# reads every .gitignore relative to the directory it sits in. This file holds
+# the repo-wide rules, plus a safety net for secrets created anywhere else.
+
+# ── secrets — never commit these ─────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── dependencies & build output ──────────────────────────────────────
+node_modules/
+dist/
+build/
+.vite/
+
+# ── logs ─────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── editors & OS junk ────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── local agent state ────────────────────────────────────────────────
+.claude/settings.local.json

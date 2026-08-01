@@ -1,0 +1,6 @@
+{
+  "watch": ["server.js", "src", ".env"],
+  "ext": "js,mjs,cjs,json,env",
+  "ignore": ["src/scripts/smoke.js", "node_modules"],
+  "delay": 300
+}
