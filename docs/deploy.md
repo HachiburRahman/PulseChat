@@ -194,9 +194,13 @@ to a local preview and nothing breaks. To enable them, add `VITE_FIREBASE_API_KE
 
 Hit **Deploy**. Copy the URL you get, e.g. `https://pulsechat.vercel.app`.
 
-`client/vercel.json` is already in the repo. It rewrites every path to
-`index.html` so React Router can handle deep links — without it, refreshing on
-`/chat/<id>` returns a Vercel 404, because that file genuinely does not exist.
+`client/vercel.json` rewrites every path to `index.html` so React Router can
+handle deep links. Without it, refreshing on `/chat/<id>` returns a Vercel 404,
+because that file genuinely does not exist on disk.
+
+Keep that file free of comments. JSON has none, and the `"//": "..."` trick that
+works in some tools is rejected here — Vercel validates `vercel.json` against a
+strict schema and fails the deploy on any unrecognised property.
 
 ---
 

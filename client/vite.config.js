@@ -37,13 +37,17 @@ function assertDeployEnv(env) {
 
   if (!problems.length) return
 
-  throw new Error(
-    `\n\n✖ Cannot build: the deployment environment is incomplete.\n\n` +
+  // Print and exit rather than throw: Vite wraps a thrown config error in a
+  // stack trace, and in a Vercel build log the useful lines scroll past while
+  // the trace makes a deliberate check look like a crash.
+  console.error(
+    `\n✖ Cannot build: the deployment environment is incomplete.\n\n` +
       problems.map((p) => `  • ${p}`).join('\n') +
       `\n\n  Set these in your host's environment variables (Vercel: Settings →\n` +
       `  Environment Variables), tick every environment, then redeploy.\n` +
       `  Building the demo build instead? Set VITE_DEMO_MODE=true.\n`,
   )
+  process.exit(1)
 }
 
 export default defineConfig(({ command, mode }) => {

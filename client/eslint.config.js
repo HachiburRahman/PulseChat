@@ -26,4 +26,9 @@ export default [
       'no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
     },
   },
+  {
+    // Build config runs in Node, not the browser: `process` is legitimate here.
+    files: ['vite.config.js', 'eslint.config.js'],
+    languageOptions: { globals: globals.node },
+  },
 ]
